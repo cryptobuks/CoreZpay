@@ -54,7 +54,7 @@
     <div class="container">
       <div class="text-center pt-5">
         <h2>CorezPay Example</h2>
-        <p class="lead pt-3">Thank you for your order.<br><br>Please send <strong><?php echo $invoiceAmount; ?> CRZ</strong> to the following address:</p>
+        <p class="lead pt-3">Thank you for your order.<br><br>Please send exactly <strong><?php echo $invoiceAmount; ?> CRZ</strong> (+ transaction fee) to the following address:</p>
         <h5><?php echo $invoiceWalletAddress; ?></h5>
         <div id="paymentStatus" name="paymentStatus">
 	        <div class="alert alert-warning my-4" role="alert">
