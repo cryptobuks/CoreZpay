@@ -7,7 +7,6 @@ CorezPay is a PHP class for accepting coreZ (http://corez.site/) payments.
 Installation on Ubuntu 16.04
 Using putty (https://www.putty.org/) log in as root.
 
-`
 sudo apt-get update
 
 sudo apt-get install software-properties-common pwgen nano git unzip
@@ -33,7 +32,6 @@ cd corez
 make
 
 make install
-`
 
 Make sure that www-data has permission to execute coreZ on your server or it will not work.
 You will receive a "Permission denied" error. You may need to edit $execCommand in src/CorezPay.php
