@@ -10,17 +10,19 @@
 
 	include_once('../src/CorezPay.php');
 
-	$coreZ = new Bavamont\CorezPay\CorezPay;
+	$coreZ = new CorezPay\CorezPay;
 
   /**
    * Get wallet balance
    */
-  $walletBalance = $coreZ->getWalletBalance();
+  $walletBalanceResult = $coreZ->getWalletBalance();
+  if ($walletBalanceResult['error'] == 0) $walletBalance = $walletBalanceResult['success'];
+  else $walletBalance = 'Error #' . $walletBalanceResult['error'];
 
   /**
    * Payout total balance to payout address
    */
-  if ($walletBalance > 0) $coreZ->payoutTotalBalance();  
+  if (($walletBalanceResult['error'] == 0) && ($walletBalance > 0)) $coreZ->payoutTotalBalance();
 
 ?>
 

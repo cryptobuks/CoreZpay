@@ -1,4 +1,4 @@
-CorezPay
+CorezPay - https://github.com/bavamont/corezpay
 =======
 
 CorezPay is a PHP class for accepting coreZ (http://corez.site/) payments.
@@ -33,14 +33,18 @@ make
 
 make install
 
-Make sure that www-data has permission to execute coreZ on your server or it will not work.
-You will receive a "Permission denied" error. You may need to edit $execCommand in src/CorezPay.php
+Make sure that www-data has permission to execute coreZ on your server or it will not work (you will receive a "Permission denied" error).
+You may need to edit/change the $execCommand in src/CorezPay.php
 
 Important: Change $payoutWalletAddress to match your payout wallet address in src/CorezPay.php
 
 ### Usage
 See /examples
 Live demo: http://62.77.157.217/coreZ/examples/index.php
+
+### Update
+03/31/2018 	Added error codes (from CoreZ Core + custom)
+			Minor changes for better class extension
 
 ### Donations
 Want to help the project? You can donate some CRZ to ZrrEJze7MCA1dQmr8KRfFdugUhxQ28Vrtu

@@ -10,14 +10,14 @@
 
 	include_once('../src/CorezPay.php');
 
-	$coreZ = new Bavamont\CorezPay\CorezPay;
+	$coreZ = new CorezPay\CorezPay;
 
-	$invoiceWalletAddress = preg_replace('/[^0-9a-zA-Z_]/',"",$_GET['invoiceWalletAddress']);
+	$invoiceWalletAddress = preg_replace('/[^0-9a-zA-Z_]/','',$_GET['invoiceWalletAddress']);
 	if (empty($invoiceWalletAddress))
 	{
 
-		$invoiceID = 'Example invoice #' . time();                            // Invoice/Order nr.
-		$invoiceAmount = number_format(floatval($_GET['amount']),8,".","");   // Invoice/Order amount in CRZ
+    $invoiceID = 'Example invoice #' . time();                            // Invoice/Order nr.
+    $invoiceAmount = number_format(floatval($_GET['amount']),8,'.','');   // Invoice/Order amount in CRZ
     if ($invoiceAmount <= 0) $invoiceAmount = 0.01;
 
 		/**
@@ -27,8 +27,9 @@
 		 * invoiceWalletAccount
 		 * invoiceWalletAddress
 		 */	
-		$paymentInformation = $coreZ->generatePayment($invoiceID, $invoiceAmount);
-		$invoiceWalletAddress = $paymentInformation['invoiceWalletAddress'];
+    $paymentInformation = $coreZ->generatePayment($invoiceID, $invoiceAmount);
+    if ($paymentInformation['error'] == 0) $invoiceWalletAddress = $paymentInformation['success']['invoiceWalletAddress'];
+    else $invoiceWalletAddress = 'Error #' . $paymentInformation['error'];
 ?>
 
 <!doctype html>
@@ -102,8 +103,11 @@
   	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
   	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script>
-
+    <?php
+      if ($paymentInformation['error'] == 0)
+      {
+    ?>
+    <script>    
     	function checkPayment() {
 	    	$.get( "order.php", { invoiceWalletAddress: "<?php echo $invoiceWalletAddress; ?>"}, 
 		    	function(data) {
@@ -120,9 +124,10 @@
     	$( document ).ready(function() {
     		checkPayment();
     	});
-
-    </script>
-    
+    </script>      
+    <?php
+      }
+    ?>   
   </body>
 </html>
 
@@ -134,7 +139,7 @@
 	 * isPaidByAddress() returns a bool. 
 	 * true if order is paid, false if not.
 	 */	
-	echo $coreZ->isPaidByAddress($invoiceWalletAddress);
+	echo $coreZ->isPaidByAddress($invoiceWalletAddress)['success'];
 
 }
 
