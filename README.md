@@ -1,4 +1,4 @@
-CorezPay - https://github.com/bavamont/corezpay
+CorezPay (Non-RPC Version) - https://github.com/bavamont/corezpay
 =======
 
 CorezPay is a PHP class for accepting coreZ (http://corez.site/) payments.
@@ -43,6 +43,7 @@ See /examples
 Live demo: http://62.77.157.217/coreZ/examples/index.php
 
 ### Update
+04/04/2018	Added notice that this is the Non-RPC version
 03/31/2018 	Added error codes (from CoreZ Core + custom)
 			Minor changes for better class extension
 

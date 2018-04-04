@@ -1,11 +1,11 @@
 <?php
 /**
- * CoreZ PHP Payment Class
+ * CoreZ PHP Payment Class (Non-RPC Version)
  * 
  * See included examples in /examples for usages instructions and examples.
  * 
- * @copyright Bavamont
- * @link https://github.com/bavamont/corezpay
+ * @author Bavamont, www.bavamont.com
+ * @link https://github.com/bavamont
  * 
  */
 
