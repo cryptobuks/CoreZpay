@@ -2,7 +2,9 @@ CorezPay (RPC Version)
 =======
 
 CorezPay is a PHP class for accepting coreZ (http://corez.site/) payments.
+
 RPC Version: https://github.com/bavamont/CoreZpay
+
 Non-RPC Version: https://github.com/bavamont/CoreZpayNonRPC
 
 ### Installation
