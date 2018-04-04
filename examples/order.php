@@ -2,34 +2,40 @@
 /**
  * IMPORTANT
  * 
- * In order to test this code you need to install coreZ. See README.md for details.
+ * See README.md for details.
  *
  * This is a usage example only! it does not cover every possible use-case, 
  * nor should it be used as is in a production environment.
  */
 
-	include_once('../src/CorezPay.php');
+  include('../src/jsonRPCClient.php');
+  include('../src/Wallet.php');
+	include('../src/CorezPay.php');
 
-	$coreZ = new CorezPay\CorezPay;
+  /**
+   *  Add the RPC settings from your wallet server (.conf file).
+   */
+  $rpcProtocol  = 'http://';
+  $rpcUser      = '';
+  $rpcPassword  = '';
+  $rpcHost      = '';
+  $rpcPort      = '';
+  
+  try {
+    $CoreZ = new CorezPay\CorezPay($rpcProtocol, $rpcUser, $rpcPassword, $rpcHost, $rpcPort);
+  } catch (Exception $e) {
+    echo 'Error: ',  $e->getMessage(), "\n";
+  }
 
 	$invoiceWalletAddress = preg_replace('/[^0-9a-zA-Z_]/','',$_GET['invoiceWalletAddress']);
 	if (empty($invoiceWalletAddress))
 	{
-
     $invoiceID = 'Example invoice #' . time();                            // Invoice/Order nr.
     $invoiceAmount = number_format(floatval($_GET['amount']),8,'.','');   // Invoice/Order amount in CRZ
     if ($invoiceAmount <= 0) $invoiceAmount = 0.01;
-
-		/**
-		 * generatePayment() returns an array with these variables:
-		 * invoiceID
-		 * invoiceAmount
-		 * invoiceWalletAccount
-		 * invoiceWalletAddress
-		 */	
-    $paymentInformation = $coreZ->generatePayment($invoiceID, $invoiceAmount);
-    if ($paymentInformation['error'] == 0) $invoiceWalletAddress = $paymentInformation['success']['invoiceWalletAddress'];
-    else $invoiceWalletAddress = 'Error #' . $paymentInformation['error'];
+    $paymentInformation = $CoreZ->generatePayment($invoiceID, $invoiceAmount);
+    if ($paymentInformation['error']['code'] == 0) $invoiceWalletAddress = $paymentInformation['success']['invoiceWalletAddress'];
+    else $invoiceWalletAddress = 'Error: ' . $paymentInformation['error']['message'];
 ?>
 
 <!doctype html>
@@ -104,7 +110,7 @@
   	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
   	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <?php
-      if ($paymentInformation['error'] == 0)
+      if ($paymentInformation['error']['code'] == 0)
       {
     ?>
     <script>    
@@ -139,7 +145,7 @@
 	 * isPaidByAddress() returns a bool. 
 	 * true if order is paid, false if not.
 	 */	
-	echo $coreZ->isPaidByAddress($invoiceWalletAddress)['success'];
+	echo $CoreZ->isPaidByAddress($invoiceWalletAddress)['success'];
 
 }
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * CoreZ PHP Payment Class (Non-RPC Version)
+ * CoreZ PHP Payment Class (RPC Version)
  * 
  * See included examples in /examples for usages instructions and examples.
  * 
@@ -11,8 +11,15 @@
 
 namespace CorezPay;
 
+use PHPRpcWalletWrapper\Wallet as Wallet;
+
 class CorezPay
 {
+	/**
+	 * RPC Client
+	 * @var string
+	 */
+    private $coreRpcClient;
 
 	/**
 	 * Payout wallet address
@@ -20,13 +27,6 @@ class CorezPay
 	 * @var string
 	 */
 	protected $payoutWalletAddress = 'ZrrEJze7MCA1dQmr8KRfFdugUhxQ28Vrtu';	
-
-	/**
-	 * Shell execution command
-	 * Define how the exec() command is run.
-	 * @var string
-	 */
-	protected $execCommand = "echo '' | sudo -S ";
 
 	/**
 	 * Invoice id
@@ -59,22 +59,20 @@ class CorezPay
 	/**
 	 * Create default invoice wallet account and set a default invoice id.
 	 */
-	public function __construct()
+	public function __construct($rpcProtocol = 'http://', $rpcUser, $rpcPassword, $rpcHost, $rpcPort)
     {
+		$this->coreRpcClient = new Wallet($rpcProtocol, $rpcUser, $rpcPassword, $rpcHost, $rpcPort);
     	$this->invoiceID = time();
     	$this->invoiceWalletAccount = $this->invoiceID . ' ' . $this->invoiceDelimiter . ' ' . number_format($this->invoiceAmount, 8, '.', '');
 
 		/**
 		 * Check if core server is running
 		 */
-        exec($this->execCommand . ' corez-cli getbalance', $walletBalance, $return);
-        if ($return < 0)
-        {
-            /**
-             * Start server
-             */         
-            exec($this->execCommand . ' corezd -daemon', $startCore);
-        }
+		$response = $this->coreRpcClient->getBalance();
+		if ($response['error'])
+		{
+			throw new Exception($response['error']['message']);
+		}
     }
 
 	/**
@@ -85,10 +83,17 @@ class CorezPay
 	 */
 	public function getAccountAddress($walletAccount)
 	{
-		exec($this->execCommand . 'corez-cli getaccountaddress "' . $walletAccount . '"', $walletAddress, $return);
-        if ($return == 0) $returnResult['success'] = trim($walletAddress[0]);
-        else $returnResult['success'] = '';
-        $returnResult['error'] = $return;
+		$response = $this->coreRpcClient->getAccountAddress($walletAccount);
+		if (!$response['error'])
+		{
+			$returnResult['success'] = trim($response['result']);
+			$returnResult['error']['code'] = 0;
+			$returnResult['error']['message'] = '';
+		} else {
+			$returnResult['success'] = '';
+			$returnResult['error']['code'] = $response['error']['code'];
+			$returnResult['error']['message'] = $response['error']['message'];
+		}
         return $returnResult;
 	}	
 
@@ -100,10 +105,17 @@ class CorezPay
 	 */
 	public function getAccount($walletAddress)
 	{
-		exec($this->execCommand . 'corez-cli getaccount "' . $walletAddress. '"', $walletAccount, $return);
-        if ($return == 0) $returnResult['success'] = trim($walletAccount[0]);
-        else $returnResult['success'] = '';
-        $returnResult['error'] = $return;
+		$response = $this->coreRpcClient->getAccount($walletAddress);
+		if (!$response['error'])
+		{
+			$returnResult['success'] = trim($response['result']);
+			$returnResult['error']['code'] = 0;
+			$returnResult['error']['message'] = '';
+		} else {
+			$returnResult['success'] = '';
+			$returnResult['error']['code'] = $response['error']['code'];
+			$returnResult['error']['message'] = $response['error']['message'];
+		}
         return $returnResult;
 	}
 
@@ -132,13 +144,13 @@ class CorezPay
 	 * Get invoice amount by address
 	 *
 	 * @param string $walletAddress Wallet address	 
-	 * @return float Invoice amount
+	 * @return array
 	 */
 	public function getInvoiceAmountByAddress($walletAddress)
 	{
-		$result = $this->getAccount($walletAddress);
-		if ($result['error'] == 0) return ['success' => $this->getInvoiceAmountByAccount($result['success']), 'error' => 0];
-		else return ['success' => '', 'error' => $result['error']];
+		$response = $this->getAccount($walletAddress);
+		if ($response['error']['code'] == 0) return ['success' => $this->getInvoiceAmountByAccount($response['success']), 'error' => ['code' => 0, 'message' => '']];
+		else return $response;
 	}	
 
 	/**
@@ -148,10 +160,17 @@ class CorezPay
 	 */
 	public function generateInvoiceWalletAddress()
 	{
-		exec($this->execCommand . 'corez-cli getnewaddress "' . $this->invoiceWalletAccount . '"', $generatedWalletAddress, $return);
-        if ($return == 0) $returnResult['success'] = trim($generatedWalletAddress[0]);
-        else $returnResult['success'] = '';
-        $returnResult['error'] = $return;
+		$response = $this->coreRpcClient->getNewAddress($this->invoiceWalletAccount);
+		if (!$response['error'])
+		{
+			$returnResult['success'] = trim($response['result']);
+			$returnResult['error']['code'] = 0;
+			$returnResult['error']['message'] = '';
+		} else {
+			$returnResult['success'] = '';
+			$returnResult['error']['code'] = $response['error']['code'];
+			$returnResult['error']['message'] = $response['error']['message'];
+		}
         return $returnResult;
 	}
 
@@ -163,24 +182,31 @@ class CorezPay
 	 */
 	public function getWalletBalanceByAccount($walletAccount = '')
 	{
-		exec($this->execCommand . 'corez-cli getbalance "' . $walletAccount . '"', $walletAccountBalance, $return);
-        if ($return == 0) $returnResult['success'] = number_format(floatval(preg_replace('/\s+/', '', $walletAccountBalance[0])), 8, '.', '');
-        else $returnResult['success'] = '';
-        $returnResult['error'] = $return;
-        return $returnResult;
+		$response = $this->coreRpcClient->getBalance($walletAccount);
+		if (!$response['error'])
+		{
+			$returnResult['success'] = number_format(floatval(preg_replace('/\s+/', '', trim($response['result']))), 8, '.', '');
+			$returnResult['error']['code'] = 0;
+			$returnResult['error']['message'] = '';
+		} else {
+			$returnResult['success'] = '';
+			$returnResult['error']['code'] = $response['error']['code'];
+			$returnResult['error']['message'] = $response['error']['message'];
+		}
+        return $returnResult;        
 	}
 
 	/**
 	 * Get wallet balance by address
 	 *
 	 * @param string $walletAddress Wallet address
-	 * @return float Wallet address balance
+	 * @return array
 	 */
 	public function getWalletBalanceByAddress($walletAddress = '')
 	{
-		$result = $this->getAccount($walletAddress);
-		if ($result['error'] == 0) return ['success' => $this->getWalletBalanceByAccount($result['success']), 'error' => 0];
-		else return ['success' => '', 'error' => $result['error']];
+		$response = $this->getAccount($walletAddress);
+		if ($response['error']['code'] == 0) return ['success' => $this->getWalletBalanceByAccount($response['success']), 'error' => ['code' => 0, 'message' => '']];
+		else return $response;
 	}	
 
 	/**
@@ -190,10 +216,17 @@ class CorezPay
 	 */
 	public function getWalletBalance()
 	{
-		exec($this->execCommand . 'corez-cli getbalance', $walletBalance, $return);
-        if ($return == 0) $returnResult['success'] = number_format(floatval(preg_replace('/\s+/', '', $walletBalance[0])), 8, '.', '');
-        else $returnResult['success'] = '';
-        $returnResult['error'] = $return;
+		$response = $this->coreRpcClient->getBalance();
+		if (!$response['error'])
+		{
+			$returnResult['success'] = number_format(floatval(preg_replace('/\s+/', '', $response['result'])), 8, '.', '');
+			$returnResult['error']['code'] = 0;
+			$returnResult['error']['message'] = '';
+		} else {
+			$returnResult['success'] = '';
+			$returnResult['error']['code'] = $response['error']['code'];
+			$returnResult['error']['message'] = $response['error']['message'];
+		}
         return $returnResult;
 	}	
 
@@ -204,15 +237,22 @@ class CorezPay
 	 */
 	public function payoutTotalBalance()
 	{
-		$result = $this->getWalletBalance();
-		if ($result['error'] == 0)
+		$response = $this->getWalletBalance();
+		if ($response['error']['code'] == 0)
 		{
-			exec($this->execCommand . 'corez-cli sendtoaddress "' . $this->payoutWalletAddress . '" ' . $result['success'] . ' "" "" true', $payoutResult, $return);
-	        if ($return == 0) $returnResult['success'] = $payoutResult;
-	        else $returnResult['success'] = '';
-	        $returnResult['error'] = $return;
+			$response2 = $this->coreRpcClient->sendToAddress($this->payoutWalletAddress, $response['success'], '', '', true);
+			if ($response2['error'])
+			{
+				$returnResult['success'] = $response2['result'];
+				$returnResult['error']['code'] = 0;
+				$returnResult['error']['message'] = '';
+			} else {
+				$returnResult['success'] = '';
+				$returnResult['error']['code'] = $response2['error']['code'];
+				$returnResult['error']['message'] = $response2['error']['message'];
+			}
 	        return $returnResult;
-	    } else return ['success' => '', 'error' => $result['error']];
+	    } else $response;
 	}
 
 	/**
@@ -223,10 +263,17 @@ class CorezPay
 	 */
 	public function payoutAmount($payoutAmount)
 	{
-		exec($this->execCommand . 'corez-cli sendtoaddress "' . $this->payoutWalletAddress . '" ' . number_format($payoutAmount, 8, '.', '') . ' "" "" true', $payoutResult, $return);
-        if ($return == 0) $returnResult['success'] = $payoutResult;
-        else $returnResult['success'] = '';
-        $returnResult['error'] = $return;
+		$response = $this->coreRpcClient->sendToAddress($this->payoutWalletAddress, number_format($payoutAmount, 8, '.', ''), '', '', true);
+		if (!$response['error'])
+		{
+			$returnResult['success'] = $response['result'];
+			$returnResult['error']['code'] = 0;
+			$returnResult['error']['message'] = '';
+		} else {
+			$returnResult['success'] = '';
+			$returnResult['error']['code'] = $response['error']['code'];
+			$returnResult['error']['message'] = $response['error']['message'];
+		}
         return $returnResult;
 	}
 
@@ -239,23 +286,20 @@ class CorezPay
 	 */
 	public function generatePayment($invoiceID, $invoiceAmount)
 	{
-		
 		$this->invoiceID = trim($invoiceID);
 		$this->invoiceAmount = number_format(floatval($invoiceAmount), 8, '.', '');
 		$this->invoiceWalletAccount = $invoiceID . ' ' . $this->invoiceDelimiter . ' ' . $this->invoiceAmount;
-
-		$result = $this->generateInvoiceWalletAddress();
-		if ($result['error'] == 0)
+		$response = $this->generateInvoiceWalletAddress();
+		if ($response['error']['code'] == 0)
 		{		
 			$paymentDetails = [
 								'invoiceID'				=> $this->invoiceID,
 								'invoiceAmount'			=> $this->invoiceAmount,
 								'invoiceWalletAccount'	=> $this->invoiceWalletAccount,
-								'invoiceWalletAddress'	=> $result['success']
+								'invoiceWalletAddress'	=> $response['success']
 								];
-
-			return['success' => $paymentDetails, 'error' => 0];
-		} else return ['success' => '', 'error' => $result['error']];
+			return ['success' => $paymentDetails, 'error' => ['code' => 0, 'message' => '']];
+		} else return $response;
 	}
 
 	/**
@@ -267,13 +311,13 @@ class CorezPay
 	public function isPaidByAccount($invoiceWalletAccount)
 	{
 		$invoiceAmount = $this->getInvoiceAmountByAccount($invoiceWalletAccount);
-		$result = $this->getWalletBalanceByAccount($invoiceWalletAccount); // walletBalance
-		if ($result['error'] == 0)
+		$response = $this->getWalletBalanceByAccount($invoiceWalletAccount); // walletBalance
+		if ($response['error']['code'] == 0)
 		{				
-			if (($invoiceAmount <= 0) || ($result['success'] <= 0)) return ['success' => false, 'error' => 99];
-			else if (abs(floatval($invoiceAmount)-floatval($result['success'])) < floatval(0.00000001)) return ['success' => true, 'error' => 0];
-			else return ['success' => false, 'error' => 98];
-		} else return ['success' => false, 'error' => $result['error']];
+			if (($invoiceAmount <= 0) || (floatval($response['success']) <= 0)) return ['success' => false, 'error' => ['code' => 99, 'message' => 'Invalid amounts.']];
+			else if (abs(floatval($invoiceAmount)-floatval($response['success'])) < floatval(0.00000001)) return ['success' => true, 'error' => ['code' => 0, 'message' => '']];
+			else return ['success' => false, 'error' => ['code' => 98, 'message' => 'Amounts error.']];
+		} else return ['success' => false, 'error' => ['code' => $response['error']['code'], 'message' => $response['error']['message']]];
 	}
 
 	/**
@@ -284,9 +328,9 @@ class CorezPay
 	 */
 	public function isPaidByAddress($invoiceWalletAddress)
 	{
-		$result = $this->getAccount($invoiceWalletAddress);
-		if ($result['error'] == 0) return $this->isPaidByAccount($result['success']);
-		else return ['success' => false, 'error' => $result['error']];
+		$response = $this->getAccount($invoiceWalletAddress);
+		if ($response['error']['code'] == 0) return $this->isPaidByAccount($response['success']);
+		else return ['success' => false, 'error' => ['code' => $response['error']['code'], 'message' => $response['error']['message']]];
 	}
 
 }

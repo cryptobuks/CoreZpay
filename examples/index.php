@@ -2,7 +2,7 @@
 /**
  * IMPORTANT
  * 
- * In order to test this code you need to install coreZ. See README.md for details.
+ * See README.md for details.
  *
  * This is a usage example only! it does not cover every possible use-case, 
  * nor should it be used as is in a production environment.

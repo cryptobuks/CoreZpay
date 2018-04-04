@@ -2,27 +2,43 @@
 /**
  * IMPORTANT
  * 
- * In order to test this code you need to install coreZ. See README.md for details.
+ * See README.md for details.
  *
  * This is a usage example only! it does not cover every possible use-case, 
  * nor should it be used as is in a production environment.
  */
 
-	include_once('../src/CorezPay.php');
+  include('../src/jsonRPCClient.php');
+  include('../src/Wallet.php');
+  include('../src/CorezPay.php');
 
-	$coreZ = new CorezPay\CorezPay;
+  /**
+   *  Add the RPC settings from your wallet server (.conf file).
+   */
+  $rpcProtocol  = 'http://';
+  $rpcUser      = '';
+  $rpcPassword  = '';
+  $rpcHost      = '';
+  $rpcPort      = '';
+
+  try {
+    $CoreZ = new CorezPay\CorezPay($rpcProtocol, $rpcUser, $rpcPassword, $rpcHost, $rpcPort);
+  } catch (Exception $e) {
+    echo 'Error: ',  $e->getMessage(), "\n";
+  }
 
   /**
    * Get wallet balance
    */
-  $walletBalanceResult = $coreZ->getWalletBalance();
-  if ($walletBalanceResult['error'] == 0) $walletBalance = $walletBalanceResult['success'];
-  else $walletBalance = 'Error #' . $walletBalanceResult['error'];
+  $walletBalance = 0;
+  $walletBalanceResult = $CoreZ->getWalletBalance();
+  if ($walletBalanceResult['error']['code'] == 0) $walletBalance = $walletBalanceResult['success'];
+  else $walletBalance = 'Error: ' . $paymentInformation['error']['message'];
 
   /**
    * Payout total balance to payout address
    */
-  if (($walletBalanceResult['error'] == 0) && ($walletBalance > 0)) $coreZ->payoutTotalBalance();
+  if (($walletBalanceResult['error']['code'] == 0) && ($walletBalance > 0)) $CoreZ->payoutTotalBalance();
 
 ?>
 
