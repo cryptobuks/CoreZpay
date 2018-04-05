@@ -193,7 +193,8 @@ class Wallet
      */
     public function listTransactions($account, int $count = 10, $from = '')
     {
-        return $this->jsonRpc->listtransactions($account, $count, $from);
+        if (!empty($from)) return $this->jsonRpc->listtransactions($account, $count, $from);
+        else return $this->jsonRpc->listtransactions($account, $count);
     }
 
     /**
